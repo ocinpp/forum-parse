@@ -67,16 +67,6 @@ public class AppTest extends TestCase {
 	 * Rigourous Test :-)
 	 */
 	public void testPost() {
-//		 WebDriver driver = new FirefoxDriver();
-//		 driver.get("http://www.discuss.com.hk/viewthread.php?tid=25680132&extra=page%3D1");
-		// System.out.println(driver.getTitle());
-		// WebElement e =
-		// driver.findElement(By.xpath("//*[@id=\"mainbody\"]/tbody/tr/td/div/table/tbody/tr/td[1]/form[1]//div[1]"));
-		// System.out.println(e.getText());
-		//
-		// String pageSource = driver.getPageSource();
-		//
-//		 driver.close();
 
 		try {
 			File input = new File("C:/temp/test-2.txt");
