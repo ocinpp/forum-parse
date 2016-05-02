@@ -1,4 +1,4 @@
-package test.selenium;
+package test;
 
 /**
  * Hello world!
