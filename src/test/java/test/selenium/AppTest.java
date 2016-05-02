@@ -32,8 +32,7 @@ public class AppTest extends TestCase {
 	
 	public void testThread() throws Exception {
 		ForumThreadParser sut = new ForumThreadParser();
-		URL testURL = new URL("http://www.discuss.com.hk/viewthread.php?tid=25744687&extra=page%3D5");
-		//URL testURL = new URL("http://www.dummy-site-for-testing-test-test.com");
+		URL testURL = new URL("http://www.dummy-site-for-testing-test-test.com");
 		ForumThread t = sut.extractThread(testURL);
 		Assert.assertEquals(187, t.getPosts().size());
 	}
