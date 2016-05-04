@@ -6,8 +6,7 @@ import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import test.ForumThread;
-import test.ForumThreadParser;
+import test.ForumTopicParser;
 
 /**
  * Unit test for simple App.
@@ -31,10 +30,14 @@ public class AppTest extends TestCase {
 	}
 	
 	public void testThread() throws Exception {
-		ForumThreadParser sut = new ForumThreadParser();
+		ForumTopicParser sut = new ForumTopicParser();
 		URL testURL = new URL("http://www.dummy-site-for-testing-test-test.com");
-		ForumThread t = sut.extractThread(testURL);
-		Assert.assertEquals(187, t.getPosts().size());
+		//ForumTopic t = sut.extractTopic(testURL);
+		//Assert.assertEquals(80, t.getPosts().size());
+		//System.out.println(t.getPosts());
+		String json = sut.topic2Json(sut.extractTopic(testURL));
+		Assert.assertNotNull(json);
+		System.out.println(json);
 	}
 	
 }
