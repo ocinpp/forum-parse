@@ -2,19 +2,26 @@ package test;
 
 public class ForumPost {
 
-	private String postId;
+	private String id;
 	private String title;
-	private String threadId;		
+	private String forum;
+	private String board;
+	private String topicId;
+	private String topicUrl;
 	private String author;
 	private String message;
 	private String date;
 	
+	public ForumPost(String forum) {
+		this.forum = forum;
+	}
+	
 	public String getId() {
-		return postId;
+		return id;
 	}
 
 	public void setId(String id) {
-		this.postId = id;
+		this.id = id;
 	}
 
 	public String getTitle() {
@@ -25,12 +32,12 @@ public class ForumPost {
 		this.title = title;
 	}
 
-	public String getThreadId() {
-		return threadId;
+	public String getTopicId() {
+		return topicId;
 	}
 
-	public void setThreadId(String threadId) {
-		this.threadId = threadId;
+	public void setTopicId(String topicId) {
+		this.topicId = topicId;
 	}
 
 	public String getAuthor() {
@@ -57,13 +64,38 @@ public class ForumPost {
 		this.date = date;
 	}
 
+	public String getBoard() {
+		return board;
+	}
+
+	public void setBoard(String board) {
+		this.board = board;
+	}
+
+	public String getForum() {
+		return forum;
+	}
+
+	public void setForum(String forum) {
+		this.forum = forum;
+	}
+	
+	public String getTopicUrl() {
+		return topicUrl;
+	}
+
+	public void setTopicUrl(String topicUrl) {
+		this.topicUrl = topicUrl;
+	}
+
 	public String toString() {
-		return 	"ID: " + postId + "\n" +
+		return 	"Post Id: " + id + "\n" +
 				"Title: " + title + "\n" +
-				"Thread ID: " + threadId + "\n" +
+				"Forum: " + forum + "\n" +
+				"Board: " + board + "\n" +
+				"Topic Id: " + topicId + "\n" +
 				"Author: " + author + "\n" + 
 				"Date: " + date + "\n" +
 				"Message: " + message;
 	}
-	
 }
