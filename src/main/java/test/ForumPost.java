@@ -3,14 +3,15 @@ package test;
 public class ForumPost {
 
 	private String id;
-	private String title;
 	private String forum;
 	private String board;
 	private String topicId;
+	private String topicTitle;	
 	private String topicUrl;
 	private String author;
+	private String authorId;
 	private String message;
-	private String date;
+	private String postDate;
 	
 	public ForumPost(String forum) {
 		this.forum = forum;
@@ -24,12 +25,12 @@ public class ForumPost {
 		this.id = id;
 	}
 
-	public String getTitle() {
-		return title;
+	public String getTopicTitle() {
+		return topicTitle;
 	}
 
-	public void setTitle(String title) {
-		this.title = title;
+	public void setTopicTitle(String title) {
+		this.topicTitle = title;
 	}
 
 	public String getTopicId() {
@@ -48,6 +49,14 @@ public class ForumPost {
 		this.author = author;
 	}
 
+	public String getAuthorId() {
+		return authorId;
+	}
+
+	public void setAuthorId(String authorId) {
+		this.authorId = authorId;
+	}
+	
 	public String getMessage() {
 		return message;
 	}
@@ -56,12 +65,12 @@ public class ForumPost {
 		this.message = message;
 	}
 
-	public String getDate() {
-		return date;
+	public String getPostDate() {
+		return postDate;
 	}
 
-	public void setDate(String date) {
-		this.date = date;
+	public void setPostDate(String postDate) {
+		this.postDate = postDate;
 	}
 
 	public String getBoard() {
@@ -90,12 +99,13 @@ public class ForumPost {
 
 	public String toString() {
 		return 	"Post Id: " + id + "\n" +
-				"Title: " + title + "\n" +
+				"Title: " + topicTitle + "\n" +
 				"Forum: " + forum + "\n" +
 				"Board: " + board + "\n" +
 				"Topic Id: " + topicId + "\n" +
 				"Author: " + author + "\n" + 
-				"Date: " + date + "\n" +
+				"Date: " + postDate + "\n" +
 				"Message: " + message;
 	}
+
 }
