@@ -1,11 +1,13 @@
 package test.selenium;
 
 import java.net.URL;
+import java.util.List;
 
 import junit.framework.Assert;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import test.ForumTopic;
 import test.ForumTopicParser;
 
 /**
@@ -29,15 +31,23 @@ public class AppTest extends TestCase {
 		return new TestSuite(AppTest.class);
 	}
 	
-	public void testThread() throws Exception {
+	public void testExtractTopic() throws Exception {
 		ForumTopicParser sut = new ForumTopicParser();
-		URL testURL = new URL("http://www.dummy-site-for-testing-test-test.com");
+		URL testUrl = new URL("http://xxx.com/");
 		//ForumTopic t = sut.extractTopic(testURL);
 		//Assert.assertEquals(80, t.getPosts().size());
 		//System.out.println(t.getPosts());
-		String json = sut.topic2Json(sut.extractTopic(testURL));
+		String json = sut.topic2Json(sut.extractTopicByUrl(testUrl));
 		Assert.assertNotNull(json);
-		System.out.println(json);
+		//System.out.println(json);
 	}
 	
+	public void testExtractTopics() throws Exception {
+		ForumTopicParser sut = new ForumTopicParser();
+		URL testUrl = new URL("http://xxx.com/");
+		List<ForumTopic> topics = sut.extractTopics(testUrl);
+		for (ForumTopic topic : topics) {
+			System.out.println(sut.topic2Json(topic));
+		}		
+	}
 }
