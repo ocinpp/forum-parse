@@ -3,8 +3,13 @@ package test;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.logging.Logger;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -28,6 +33,114 @@ public class ForumTopicParser {
 	private static final String FORUM_NAME = "Forum1";
 	private static final String FORUM_CHARSET = "Big5-HKSCS";
 	private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36";
+	private static final int SLEEP_BETWEEN_TOPICS = 2000;
+	
+	private static final String FORUM_BASE_URL = "http://xxx.com/";
+	private static final String USER_URL = "space.php\\?uid=";
+	
+	private static final int LAST_POST_DAYS_AGO = 7;
+	
+	private Logger logger = Logger.getLogger(this.getClass().getName());
+	
+	/**
+	 * Extract the topics in the page
+	 * @param url URL of the board without page number
+	 * @return
+	 * @throws Exception
+	 */
+	public List<ForumTopic> extractTopics(URL baseUrl) throws Exception {
+		List<ForumTopic> topics = new ArrayList<ForumTopic>();
+		
+		// starts from page 1 until last post date is more than 7 days ago
+		Calendar now = Calendar.getInstance();
+		now.add(Calendar.DATE, -1 * LAST_POST_DAYS_AGO);
+		Date limitDate = now.getTime();
+		
+		int i = 0;
+		
+		boolean finish = false;
+		// get required topics
+		while (!finish) {
+			i++;
+			URL checkURL = new URL(baseUrl + "&" + PAGE_PARAM + "=" + i);
+			String content = null;
+			
+			try {
+				content = this.getContentAsString(checkURL, Charset.forName(FORUM_CHARSET));
+			} catch (Exception e) {
+				logger.info(e.getMessage());
+			}
+			
+			if (content != null) {
+				Document doc = Jsoup.parse(content);
+				Elements elements = doc.select("div.mainbox.threadlist");
+				elements = elements.select(".tsubject");
+				
+//				List<URL> topicUrls = new ArrayList<URL>();				
+				for (Element element : elements) {
+					Element p = element.parent().parent().parent();
+					String checkId = p.attr("id");
+					if (checkId.startsWith("normalthread")) {
+						ForumTopic t = new ForumTopic();
+//						topicUrls.add(new URL(new URL(FORUM_BASE_URL), element.select("a").attr("href")));
+						String author = p.select(".author cite a").first().ownText();
+						String date = p.select(".author > em").first().ownText();
+						String reply = p.select(".nums > strong").first().ownText();
+						String view = p.select(".nums > em").first().ownText();
+						
+						// <span title="2016-5-10 08:32 PM">
+						// or
+						// 2016-5-9 10:23 PM
+						Element lastpostElement = p.select(".lastpost > em > a > span").first();
+						String lastpost = null;
+						if (lastpostElement != null) {
+							lastpost = lastpostElement.attr("title");
+						} else {
+							lastpost = p.select(".lastpost > em > a").first().ownText();
+						}
+						
+						t.setAuthor(author);
+						t.setTopicDate(date);
+						t.setReplyCount(new Integer(reply));
+						t.setViewCount(new Integer(view));
+						t.setLastPost(lastpost);
+						t.setUrl((new URL(new URL(FORUM_BASE_URL), element.select("a").attr("href")).toString()));
+						topics.add(t);
+						
+						// Sample: 2016-5-14 04:25 AM
+						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd hh:mm a", Locale.ENGLISH);
+//						logger.info(sdf.parse(lastpost).toString());
+						
+						// break if last post more than 7 days
+						if (sdf.parse(lastpost).before(limitDate)) {
+							finish = true;
+							break;
+						}
+					}
+				}
+			} else {
+				finish = true;
+			}
+		}
+				
+		//		List<ForumTopic> topics = new ArrayList<ForumTopic>();
+		//		for (URL topicUrl : topicUrls) {
+		//			ForumTopic t = extractTopic(topicUrl);
+		//			topics.add(t);
+		//			Thread.sleep(SLEEP_BETWEEN_TOPICS);
+		//		}
+				
+		// extract topics
+		for (ForumTopic topic : topics) {
+			extractTopic(topic);
+			Thread.sleep(SLEEP_BETWEEN_TOPICS);
+		}
+		
+		System.out.println("Num of pages: " + i);
+		System.out.println("Num of topics: " + topics.size());
+		
+		return topics;
+	}
 	
 	/**
 	 * Extract the entire topic content with the given URL
@@ -35,7 +148,27 @@ public class ForumTopicParser {
 	 * @return
 	 * @throws Exception
 	 */
-	public ForumTopic extractTopic(URL url) throws Exception {
+	public void extractTopic(ForumTopic topic) throws Exception {
+		List<URL> pages = new ArrayList<URL>();
+		pages.addAll(this.getAllPages(new URL(topic.getUrl())));
+		List<ForumPost> p = new ArrayList<ForumPost>();
+		for (URL page : pages) {
+			try {
+				p.addAll(this.parsePage(page));
+			} catch (Exception e) {
+				System.out.println(page);
+			}
+		}
+		topic.setPosts(p);
+	}
+	
+	/**
+	 * Extract the entire topic content with the given URL
+	 * @param url
+	 * @return
+	 * @throws Exception
+	 */
+	public ForumTopic extractTopicByUrl(URL url) throws Exception {
 		List<URL> pages = new ArrayList<URL>();
 		pages.addAll(this.getAllPages(url));
 		List<ForumPost> p = new ArrayList<ForumPost>();
@@ -71,12 +204,29 @@ public class ForumTopicParser {
 	 */
 	public List<URL> getAllPages(URL url) throws Exception {
 		//big5?
-		Document doc = Jsoup.connect(url.toString()).userAgent("Mozilla").get();
+		//Document doc = Jsoup.connect(url.toString()).userAgent(USER_AGENT).get();
+		
+		String content = null;
+		try {
+			content = this.getContentAsString(url, Charset.forName(FORUM_CHARSET));
+		} catch (Exception e) {
+			logger.info(e.getMessage());
+		}
+		
+		Document doc = Jsoup.parse(content);
 		
 		List<URL> links = new ArrayList<URL>();
 		
-		int totalMessages = Integer.parseInt(doc.select(".pages_btns .pages").select("em").html().replaceAll("&nbsp;", ""));
-		int numOfPages = totalMessages / POST_IN_PAGE + 1;
+		String sTotalMessages = doc.select(".pages_btns .pages").select("em").html().replaceAll("&nbsp;", "");
+		int totalMessages = 0;
+		try {
+			totalMessages = Integer.parseInt(sTotalMessages);
+		} catch (NumberFormatException e) {
+			// assume 1 message if the count is not found
+			totalMessages = 1;
+		}
+		
+		int numOfPages = totalMessages / POST_IN_PAGE + ((totalMessages % POST_IN_PAGE > 0) ? 1 : 0);
 		
 		for (int i = 0; i < numOfPages; i++) {
 			URL pageUrl = new URL(url.toString() + "&" + PAGE_PARAM + "=" + (i + 1));
@@ -127,16 +277,24 @@ public class ForumTopicParser {
 
 		List<ForumPost> posts = new ArrayList<ForumPost>();
 
-		String baordName = doc.select("#topbar #topbar_wrapper #topbar_nav .topbar_gid").select("a").select("img").attr("alt");
-		String title = elements.first().select("h1").text();
-		String tidHref = doc.select("#topbar #topbar_wrapper #topbar_nav .topbar_tid").select("a").attr("href");
+		String baordName = doc.select("#topbar #topbar_wrapper #topbar_nav .topbar_gid > a").first().select("img").attr("alt");
+		String tidHref = doc.select("#topbar #topbar_wrapper #topbar_nav .topbar_tid > a").first().attr("href");
 		String tid = tidHref.replaceAll("viewthread\\.php\\?tid=", "");
+		
+		Element titleElement = elements.first().select("h1").first();
+		
+		// cannot read title due to access right
+		if (titleElement == null) {
+			return posts;
+		}
+		
+		String title = titleElement.text();
 		
 		for (Element element : elements) {
 			ForumPost p = new ForumPost(FORUM_NAME);
 			p.setBoard(baordName);
 			p.setTopicId(tid);
-			p.setTitle(title);
+			p.setTopicTitle(title);
 			p.setTopicUrl(url.toString());
 
 			String postId = element.select(".postauthor > cite > div").first().attr("id").replaceAll("userinfo", "");
@@ -144,10 +302,17 @@ public class ForumTopicParser {
 			
 			String author = element.select(".postauthor > cite > a").first().text();
 			p.setAuthor(author);
+			
+			String authorIdUrl = element.select(".postauthor > cite > a").first().attr("href");
+			if (authorIdUrl != null) {
+				String authorId = authorIdUrl.replaceAll(USER_URL, "");
+				p.setAuthorId(authorId);
+			}
+			
 
 			// need to handle &nbsp; after the date
-			String date = element.select(".postcontent .postinfo ").first().ownText().replaceAll("     ", "").replaceAll("發表於 ", "");
-			p.setDate(date);
+			String date = element.select(".postcontent .postinfo").first().ownText().replaceAll("     ", "").replaceAll("發表於 ", "");
+			p.setPostDate(date);
 
 			Elements postContent = element.select("#postorig_" + postId);
 			
@@ -163,6 +328,7 @@ public class ForumTopicParser {
 				String messageText = postMessageElements.text();
 				
 				// remove [ 本帖最後由 xxxx 於 xxxx-x-x xx:xx xx 編輯 ] message
+				// match line breaks by (?s)
 				messageText = messageText.replaceAll("(?s)\\[ 本帖最後由.*?編輯 ]", "").trim();
 				p.setMessage(messageText);
 			}
