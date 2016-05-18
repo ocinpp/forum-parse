@@ -9,7 +9,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.logging.Logger;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -21,10 +21,13 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.base.Stopwatch;
 
 public class ForumTopicParser {
 
@@ -34,13 +37,16 @@ public class ForumTopicParser {
 	private static final String FORUM_CHARSET = "Big5-HKSCS";
 	private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36";
 	private static final int SLEEP_BETWEEN_TOPICS = 2000;
+	private static final int SLEEP_BETWEEN_PAGES = 0;
 	
-	private static final String FORUM_BASE_URL = "http://xxx.com/";
+	private static final String FORUM_BASE_URL = "http://www.discuss.com.hk/";
 	private static final String USER_URL = "space.php\\?uid=";
+	private static final String PATTERN_EDIT_BY = "(?s)\\[ 本帖最後由.*?編輯 ]";
+	private static final String DATE_FORMAT_LAST_POST = "yyyy-M-dd hh:mm a";
 	
-	private static final int LAST_POST_DAYS_AGO = 7;
+	private static final int LAST_POST_DAYS_AGO = 14;
 	
-	private Logger logger = Logger.getLogger(this.getClass().getName());
+	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	/**
 	 * Extract the topics in the page
@@ -49,6 +55,8 @@ public class ForumTopicParser {
 	 * @throws Exception
 	 */
 	public List<ForumTopic> extractTopics(URL baseUrl) throws Exception {
+		Stopwatch stopwatch = Stopwatch.createStarted();
+		
 		List<ForumTopic> topics = new ArrayList<ForumTopic>();
 		
 		// starts from page 1 until last post date is more than 7 days ago
@@ -68,7 +76,7 @@ public class ForumTopicParser {
 			try {
 				content = this.getContentAsString(checkURL, Charset.forName(FORUM_CHARSET));
 			} catch (Exception e) {
-				logger.info(e.getMessage());
+				logger.info(e.getMessage(), e);
 			}
 			
 			if (content != null) {
@@ -83,6 +91,8 @@ public class ForumTopicParser {
 					if (checkId.startsWith("normalthread")) {
 						ForumTopic t = new ForumTopic();
 //						topicUrls.add(new URL(new URL(FORUM_BASE_URL), element.select("a").attr("href")));
+						String id = checkId.replaceAll("normalthread_", "");
+						String subject = p.select(".tsubject > a").first().ownText();
 						String author = p.select(".author cite a").first().ownText();
 						String date = p.select(".author > em").first().ownText();
 						String reply = p.select(".nums > strong").first().ownText();
@@ -99,6 +109,8 @@ public class ForumTopicParser {
 							lastpost = p.select(".lastpost > em > a").first().ownText();
 						}
 						
+						t.setId(id);
+						t.setSubject(subject);
 						t.setAuthor(author);
 						t.setTopicDate(date);
 						t.setReplyCount(new Integer(reply));
@@ -108,7 +120,7 @@ public class ForumTopicParser {
 						topics.add(t);
 						
 						// Sample: 2016-5-14 04:25 AM
-						SimpleDateFormat sdf = new SimpleDateFormat("yyyy-M-dd hh:mm a", Locale.ENGLISH);
+						SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_LAST_POST, Locale.ENGLISH);
 //						logger.info(sdf.parse(lastpost).toString());
 						
 						// break if last post more than 7 days
@@ -130,14 +142,18 @@ public class ForumTopicParser {
 		//			Thread.sleep(SLEEP_BETWEEN_TOPICS);
 		//		}
 				
+		logger.info("Topics to load:\t" + topics.size());
+		
 		// extract topics
 		for (ForumTopic topic : topics) {
 			extractTopic(topic);
 			Thread.sleep(SLEEP_BETWEEN_TOPICS);
 		}
 		
-		System.out.println("Num of pages: " + i);
-		System.out.println("Num of topics: " + topics.size());
+		stopwatch.stop();
+		logger.info("Total elapsed time (milliseconds):\t" + stopwatch.elapsed(TimeUnit.MILLISECONDS));
+		logger.info("Total num of pages:\t" + i);
+		logger.info("Total num of topics:\t" + topics.size());
 		
 		return topics;
 	}
@@ -149,17 +165,24 @@ public class ForumTopicParser {
 	 * @throws Exception
 	 */
 	public void extractTopic(ForumTopic topic) throws Exception {
+		Stopwatch stopwatch = Stopwatch.createStarted();
+		
 		List<URL> pages = new ArrayList<URL>();
 		pages.addAll(this.getAllPages(new URL(topic.getUrl())));
 		List<ForumPost> p = new ArrayList<ForumPost>();
 		for (URL page : pages) {
 			try {
 				p.addAll(this.parsePage(page));
+				Thread.sleep(SLEEP_BETWEEN_PAGES);
 			} catch (Exception e) {
-				System.out.println(page);
+				logger.error("Error in page (" + topic.getId() + ", " + topic.getSubject() + ", " + page);
 			}
 		}
+		
 		topic.setPosts(p);
+		
+		stopwatch.stop();
+		logger.info("Elapsed time (milliseconds) (" + topic.getId() + ", " + topic.getSubject() + ", " + pages.size() + ", " + p.size() + "):\t" + stopwatch.elapsed(TimeUnit.MILLISECONDS));		
 	}
 	
 	/**
@@ -173,7 +196,7 @@ public class ForumTopicParser {
 		pages.addAll(this.getAllPages(url));
 		List<ForumPost> p = new ArrayList<ForumPost>();
 		for (URL page : pages) {
-			p.addAll(this.parsePage(page));
+			p.addAll(this.parsePage(page));			
 		}
 		ForumTopic t = new ForumTopic();
 		t.setPosts(p);
@@ -197,7 +220,8 @@ public class ForumTopicParser {
 	}
 	
 	/**
-	 * With the given URL (first page), parse the content and get all links to the remaining pages
+	 * With the given URL (first page), parse the content and get all links to the remaining pages 
+	 * by calculating the number of pages using the total
 	 * @param url
 	 * @return
 	 * @throws Exception
@@ -210,7 +234,7 @@ public class ForumTopicParser {
 		try {
 			content = this.getContentAsString(url, Charset.forName(FORUM_CHARSET));
 		} catch (Exception e) {
-			logger.info(e.getMessage());
+			logger.info(e.getMessage(), e);
 		}
 		
 		Document doc = Jsoup.parse(content);
@@ -222,7 +246,8 @@ public class ForumTopicParser {
 		try {
 			totalMessages = Integer.parseInt(sTotalMessages);
 		} catch (NumberFormatException e) {
-			// assume 1 message if the count is not found
+			//logger.error("Failed to parse message total number: " + url);
+			// assume 1 message if the count is not found			
 			totalMessages = 1;
 		}
 		
@@ -329,7 +354,7 @@ public class ForumTopicParser {
 				
 				// remove [ 本帖最後由 xxxx 於 xxxx-x-x xx:xx xx 編輯 ] message
 				// match line breaks by (?s)
-				messageText = messageText.replaceAll("(?s)\\[ 本帖最後由.*?編輯 ]", "").trim();
+				messageText = messageText.replaceAll(PATTERN_EDIT_BY, "").trim();
 				p.setMessage(messageText);
 			}
 			posts.add(p);
