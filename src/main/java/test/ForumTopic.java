@@ -5,6 +5,8 @@ import java.util.List;
 
 public class ForumTopic {
 
+	private String id;
+	private String subject;
 	private String author;
 	private String topicDate;
 	private Integer replyCount;
@@ -13,6 +15,18 @@ public class ForumTopic {
 	private String url;
 	private List<ForumPost> posts;
 	
+	public String getId() {
+		return id;
+	}
+	public void setId(String id) {
+		this.id = id;
+	}
+	public String getSubject() {
+		return subject;
+	}
+	public void setSubject(String subject) {
+		this.subject = subject;
+	}
 	public String getAuthor() {
 		return author;
 	}
