@@ -7,7 +7,7 @@ public class ForumPost {
 	private String board;
 	private String topicId;
 	private String topicTitle;	
-	private String topicUrl;
+	private String url;
 	private String author;
 	private String authorId;
 	private String message;
@@ -89,12 +89,12 @@ public class ForumPost {
 		this.forum = forum;
 	}
 	
-	public String getTopicUrl() {
-		return topicUrl;
+	public String getUrl() {
+		return url;
 	}
 
-	public void setTopicUrl(String topicUrl) {
-		this.topicUrl = topicUrl;
+	public void setUrl(String url) {
+		this.url = url;
 	}
 
 	public String toString() {
