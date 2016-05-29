@@ -36,8 +36,8 @@ public class ForumTopicParser {
 	private static final String FORUM_NAME = "Forum1";
 	private static final String FORUM_CHARSET = "Big5-HKSCS";
 	private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36";
-	private static final int SLEEP_BETWEEN_TOPICS = 2000;
-	private static final int SLEEP_BETWEEN_PAGES = 0;
+	private static final int SLEEP_BETWEEN_TOPICS = 0;
+	private static final int SLEEP_BETWEEN_PAGES = 2000;
 	
 	private static final String FORUM_BASE_URL = "http://www.discuss.com.hk/";
 	private static final String USER_URL = "space.php\\?uid=";
@@ -203,7 +203,7 @@ public class ForumTopicParser {
 		return t;
 	}
 	
-	public String topic2Json(ForumTopic t) throws Exception {
+	public String object2Json(Object t) throws Exception {
 		// https://github.com/FasterXML/jackson-databind/
 		ObjectMapper mapper = new ObjectMapper();
 		
@@ -320,7 +320,7 @@ public class ForumTopicParser {
 			p.setBoard(baordName);
 			p.setTopicId(tid);
 			p.setTopicTitle(title);
-			p.setTopicUrl(url.toString());
+			p.setUrl(url.toString());
 
 			String postId = element.select(".postauthor > cite > div").first().attr("id").replaceAll("userinfo", "");
 			p.setId(postId);
