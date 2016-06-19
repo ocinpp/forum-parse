@@ -41,7 +41,7 @@ public class BForumTopicParser {
 	private static final int SLEEP_BETWEEN_TOPICS = 0;
 	private static final int SLEEP_BETWEEN_PAGES = 2000;
 	
-	private static final String FORUM_BASE_URL = "http://www.baby-kingdom.com/";	
+	private static final String FORUM_BASE_URL = "http://www.xxxx.com/";	
 	private static final String USER_URL = "home.php\\?mod=space&uid=";		
 	// match line breaks by (?s), lazy, match as few as possible between 由 and 編輯
 	private static final String PATTERN_EDIT_BY = "(?s)本帖最後由.*?編輯 ";

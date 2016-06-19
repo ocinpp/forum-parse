@@ -42,7 +42,7 @@ public class DForumTopicParser {
 	private static final int SLEEP_BETWEEN_TOPICS = 2000;
 	private static final int SLEEP_BETWEEN_PAGES = 0;
 	
-	private static final String FORUM_BASE_URL = "http://www.discuss.com.hk/";
+	private static final String FORUM_BASE_URL = "http://www.xxxx.com.hk/";
 	private static final String USER_URL = "space.php\\?uid=";
 	private static final String PATTERN_EDIT_BY = "(?s)\\[ 本帖最後由.*?編輯 ]";
 	private static final String DATE_FORMAT_LAST_POST = "yyyy-M-d hh:mm a";
