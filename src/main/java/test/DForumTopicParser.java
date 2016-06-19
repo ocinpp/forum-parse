@@ -3,10 +3,10 @@ package test;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -29,22 +29,25 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Stopwatch;
 
-public class ForumTopicParser {
+import model.ForumPost;
+import model.ForumTopic;
+
+public class DForumTopicParser {
 
 	private static final int POST_IN_PAGE = 15;
 	private static final String PAGE_PARAM = "page";
 	private static final String FORUM_NAME = "Forum1";
 	private static final String FORUM_CHARSET = "Big5-HKSCS";
 	private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.112 Safari/537.36";
-	private static final int SLEEP_BETWEEN_TOPICS = 0;
-	private static final int SLEEP_BETWEEN_PAGES = 2000;
+	private static final int SLEEP_BETWEEN_TOPICS = 2000;
+	private static final int SLEEP_BETWEEN_PAGES = 0;
 	
 	private static final String FORUM_BASE_URL = "http://www.discuss.com.hk/";
 	private static final String USER_URL = "space.php\\?uid=";
 	private static final String PATTERN_EDIT_BY = "(?s)\\[ 本帖最後由.*?編輯 ]";
-	private static final String DATE_FORMAT_LAST_POST = "yyyy-M-dd hh:mm a";
+	private static final String DATE_FORMAT_LAST_POST = "yyyy-M-d hh:mm a";
 	
-	private static final int LAST_POST_DAYS_AGO = 14;
+	private static final int LAST_POST_DAYS_AGO = 10;
 	
 	private Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -59,10 +62,10 @@ public class ForumTopicParser {
 		
 		List<ForumTopic> topics = new ArrayList<ForumTopic>();
 		
-		// starts from page 1 until last post date is more than 7 days ago
+		// starts from page 1 until last post date is more than x days ago
 		Calendar now = Calendar.getInstance();
-		now.add(Calendar.DATE, -1 * LAST_POST_DAYS_AGO);
-		Date limitDate = now.getTime();
+		now.add(Calendar.DAY_OF_MONTH, -1 * LAST_POST_DAYS_AGO);
+		LocalDateTime limitDate = LocalDateTime.of(now.get(Calendar.YEAR), now.get(Calendar.MONTH) + 1, now.get(Calendar.DAY_OF_MONTH), 0, 0, 0);
 		
 		int i = 0;
 		
@@ -116,17 +119,19 @@ public class ForumTopicParser {
 						t.setReplyCount(new Integer(reply));
 						t.setViewCount(new Integer(view));
 						t.setLastPost(lastpost);
-						t.setUrl((new URL(new URL(FORUM_BASE_URL), element.select("a").attr("href")).toString()));
-						topics.add(t);
+						t.setUrl((new URL(new URL(FORUM_BASE_URL), element.select("a").attr("href")).toString()));						
 						
 						// Sample: 2016-5-14 04:25 AM
-						SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_LAST_POST, Locale.ENGLISH);
-//						logger.info(sdf.parse(lastpost).toString());
+						DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT_LAST_POST).withLocale(Locale.ENGLISH);						
 						
-						// break if last post more than 7 days
-						if (sdf.parse(lastpost).before(limitDate)) {
+						// break if last post more than x days
+						// else add to list											
+						
+						if (LocalDateTime.parse(lastpost, formatter).isBefore(limitDate)) {
 							finish = true;
 							break;
+						} else {
+							topics.add(t);
 						}
 					}
 				}
