@@ -1,5 +1,6 @@
-package test;
+package model;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public class ForumTopic {
 	private Integer viewCount;
 	private String lastPost;
 	private String url;
-	private List<ForumPost> posts;
+	private List<ForumPost> posts = new ArrayList<ForumPost>();
 	
 	public String getId() {
 		return id;
