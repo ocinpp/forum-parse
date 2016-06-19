@@ -8,7 +8,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import model.ForumTopic;
-import test.DForumTopicParser;
+import parser.DForumTopicParser;
 
 /**
  * Unit test 
