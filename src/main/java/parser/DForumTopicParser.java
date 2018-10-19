@@ -85,7 +85,18 @@ public class DForumTopicParser {
 			if (content != null) {
 				Document doc = Jsoup.parse(content);
 				Elements elements = doc.select("div.mainbox.threadlist");
+				
+				// if main thread list cannot be found, the forum does not exists
+				if (elements.isEmpty()) {
+					break;
+				}
+				
 				elements = elements.select(".tsubject");
+				
+				// exit when subject cannot be found
+				if (elements.isEmpty()) {
+					break;
+				}
 				
 //				List<URL> topicUrls = new ArrayList<URL>();				
 				for (Element element : elements) {
@@ -116,8 +127,12 @@ public class DForumTopicParser {
 						t.setSubject(subject);
 						t.setAuthor(author);
 						t.setTopicDate(date);
-						t.setReplyCount(new Integer(reply));
-						t.setViewCount(new Integer(view));
+						if (reply != null) {
+							t.setReplyCount(new Integer(reply.replaceAll(",", "")));
+						}
+						if (view != null) {
+							t.setViewCount(new Integer(view.replaceAll(",", "")));
+						}
 						t.setLastPost(lastpost);
 						t.setUrl((new URL(new URL(FORUM_BASE_URL), element.select("a").attr("href")).toString()));						
 						

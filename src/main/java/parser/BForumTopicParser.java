@@ -86,8 +86,19 @@ public class BForumTopicParser {
 			if (content != null) {
 				Document doc = Jsoup.parse(content);
 				Elements elements = doc.select("#threadlist");
+				
+				// if main thread list cannot be found, the forum does not exists
+				if (elements.isEmpty()) {
+					break;
+				}
+				
 				elements = elements.select("tbody[id~=normalthread_[0-9]+]");
 					
+				// exit when threads cannot be found
+				if (elements.isEmpty()) {
+					break;
+				}
+				
 				for (Element element : elements) {					
 					ForumTopic t = new ForumTopic();
 					String checkId = element.attr("id");
