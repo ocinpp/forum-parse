@@ -1,3 +1,5 @@
+[![Known Vulnerabilities](https://snyk.io//test/github/ocinpp/hk-film-calendar-info/badge.svg?targetFile=pom.xml)](https://snyk.io//test/github/ocinpp/hk-film-calendar-info?targetFile=pom.xml)
+
 # forum-parse
 Get and parse forum data
 
